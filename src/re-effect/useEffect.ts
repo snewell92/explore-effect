@@ -1,11 +1,16 @@
 
 import { Effect } from "effect";
 import type { Effect as EFF } from "effect/Effect";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-/** Runs a 'clean' synchronous effect, returning the result */
-export const useEffectSync = <TResult, TError>(effect: EFF<TResult, TError, never>): TResult =>
-  Effect.runSync(effect);
+/** Runs a 'clean' synchronous effect, returning the result
+ * 
+ * @param effect An effect to run with Effect.runSync, once, by wrapping with useMemo
+*/
+export const useEffectSync = <TResult, TError>(effect: EFF<TResult, TError, never>): TResult => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => Effect.runSync(effect), []);
+}
 
 export type PromiseState = "init" | "pending" | "resolved:success" | "resolved:error";
 
@@ -48,20 +53,25 @@ export const useMountEffectPromise = <TR, TE>(eff: EFF<TR, TE>): States<TR, TE> 
     const controller = new AbortController();
 
     setStatus("pending");
-    Effect.runPromise(eff, { signal: controller.signal })
-      .then(res => {
-        setStatus("resolved:success");
-        setResult(res);
-      })
-      .catch(err => {
-        setStatus("resolved:error");
-        setError(err);
-      });
+    Effect.runPromiseExit(eff, { signal: controller.signal })
+      .then(exit =>
+        Effect.match(exit, {
+          onSuccess(result) {
+            setStatus("resolved:success");
+            setResult(result);
+          },
+          onFailure(error) {
+            setStatus("resolved:error");
+            setError(error);
+          },
+        })
+      ).then(Effect.runSync);
 
     return controller.abort.bind(controller);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ensures there is no invalid combination of state returned
   switch (status) {
     case "init":
       return { result, error, status } as Init;
