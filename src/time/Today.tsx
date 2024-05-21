@@ -4,17 +4,27 @@
 
 import { useEffectSync } from "~/re-effect/useEffect";
 import { Meal } from "./Meal";
-import { getToday } from "./time";
+import { getDayFromInput, getToday } from "./time";
 import { Season } from "./Season";
-import { DisplayError } from "./error";
+import { DisplayError, ParseError } from "./error";
 import { DateDisplay } from "./DateDisplay";
 import { TimeDisplay } from "./TimeDisplay";
 
+export interface TodayProps {
+  input: string | null;
+}
+
 /** Display nicely formatted details about today, definitely has no quirks */
-export const Today = () => {
-  const { result, status, error } = useEffectSync(getToday);
+export const Today = ({ input }: TodayProps) => {
+  const { result, status, error } = useEffectSync(
+    input ? getDayFromInput(input) : getToday
+  );
 
   if (status === "error") {
+    if (error._tag === "DateParseError") {
+      return <ParseError input={input || ""} />;
+    }
+
     return <DisplayError error={error} />;
   }
 

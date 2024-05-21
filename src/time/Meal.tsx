@@ -86,7 +86,13 @@ export const Meal = ({ meal: { name, time, runningLate } }: MealProps) => {
   return (
     <div className="text-left border-l-4 pl-4 my-2 border-l-indigo-600">
       <p>
-        🍴 {name} at {time[0]}:{padNumWithZeroes(2, time[1])}.{" "}
+        🍴 {name} at {time[0]}:{padNumWithZeroes(2, time[1])}
+      </p>
+      <p
+        className={
+          "text-xs pl-4 " + (runningLate ? "text-red-500 font-semibold" : "")
+        }
+      >
         {runningLate
           ? "Get there quick before food runs out!"
           : "Don't be late, they won't wait for you."}

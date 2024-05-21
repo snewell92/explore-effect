@@ -22,6 +22,9 @@ export interface Today {
   monthName: Month;
   ordinalDate: string;
   year: string;
+  /** 24 hour time */
+  hourNum: number;
+  /** 12 hour time */
   hour: string;
   minute: string;
   second: string;
@@ -90,12 +93,20 @@ function processDate(d: Date): GetToday {
   const meridiemPeriod = hour < 12 ? "am" : "pm";
   const meal = nextMeal(hour, minute);
 
+  let twelveHourTime = String(hour);
+  if (hour === 0) {
+    twelveHourTime = "12";
+  } else if (hour > 12) {
+    twelveHourTime = String(hour - 12);
+  }
+
   return Effect.succeed<Today>({
     monthName,
     season,
     ordinalDate: ordinal(d.getDate()),
     year: d.getFullYear().toString(10),
-    hour: hour === 0 ? "12" : padNumWithZeroes(2, hour),
+    hourNum: hour,
+    hour: twelveHourTime,
     minute: padNumWithZeroes(2, minute),
     second: padNumWithZeroes(2, second),
     meridiem: meridiemPeriod,
@@ -103,4 +114,32 @@ function processDate(d: Date): GetToday {
   });
 }
 
+
+class DateParseError {
+  readonly _tag = "DateParseError";
+  readonly error: unknown;
+
+  constructor(error: unknown) {
+    this.error = error;
+  }
+}
+
+function isInvalidDate(d: Date): boolean {
+  return Number.isNaN(d.valueOf()) || String(d) === "Invalid Date";
+}
+
+function parseDate(input: string): Effect.Effect<Date, DateParseError, never> {
+  return Effect.try({
+    try: () => {
+      const d = new Date(input);
+      if (isInvalidDate(d)) {
+        throw new Error("Invalid date")
+      }
+      return d;
+    },
+    catch: (e) => new DateParseError(e),
+  })
+}
+
 export const getToday = freshDay.pipe(Effect.flatMap(processDate));
+export const getDayFromInput = (input: string) => parseDate(input).pipe(Effect.flatMap(processDate));
