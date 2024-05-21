@@ -65,8 +65,20 @@ type HandledErrors = InvalidSeconds | InvalidSeason | TooEarly;
 
 type GetToday = Effect.Effect<Today, HandledErrors, never>;
 
-// I don't think new Date w/ no args could ever fail (?)
-const freshDay = Effect.sync(() => new Date());
+/** Converts 24 hour time to 12 hour time. Sorry. */
+export function twentyFourToTwelve(hour: number): [string, "am" | "pm"] {
+  const meridiemPeriod = hour < 12 ? "am" : "pm";
+
+  let twelveHourTime = String(hour);
+  if (hour === 0) {
+    twelveHourTime = "12";
+  } else if (hour > 12) {
+    twelveHourTime = String(hour - 12);
+  }
+
+  return [twelveHourTime, meridiemPeriod];
+}
+
 
 function processDate(d: Date): GetToday {
   const hour = d.getHours();
@@ -90,15 +102,8 @@ function processDate(d: Date): GetToday {
     return Effect.fail(new TooEarly(d));
   }
 
-  const meridiemPeriod = hour < 12 ? "am" : "pm";
   const meal = nextMeal(hour, minute);
-
-  let twelveHourTime = String(hour);
-  if (hour === 0) {
-    twelveHourTime = "12";
-  } else if (hour > 12) {
-    twelveHourTime = String(hour - 12);
-  }
+  const [twelveHourTime, meridiemPeriod] = twentyFourToTwelve(hour);
 
   return Effect.succeed<Today>({
     monthName,
@@ -137,6 +142,9 @@ const parseDate = (input: string) =>
     },
     catch: (e) => new DateParseError(e),
   });
+
+// I don't think new Date w/ no args could ever fail (?)
+const freshDay = Effect.sync(() => new Date());
 
 export const getToday = freshDay.pipe(Effect.flatMap(processDate));
 export const getDayFromInput = (input: string) => parseDate(input).pipe(Effect.flatMap(processDate));

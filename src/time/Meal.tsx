@@ -1,6 +1,7 @@
 // https://scifi.stackexchange.com/a/105212
 
 import { padNumWithZeroes } from "./format";
+import { twentyFourToTwelve } from "./time";
 
 // Taking the 7 meal interpretation, separating Dinner and Supper
 export type HobbitMeal =
@@ -81,10 +82,13 @@ export interface MealProps {
 }
 
 export const Meal = ({ meal: { name, time, runningLate } }: MealProps) => {
+  const [twelveHourTime, meridiemPeriod] = twentyFourToTwelve(time[0]);
+
   return (
     <div className="text-left border-l-4 pl-4 my-2 border-l-indigo-600">
       <p>
-        🍴 {name} at {time[0]}:{padNumWithZeroes(2, time[1])}
+        🍴 {name} at {twelveHourTime}:{padNumWithZeroes(2, time[1])}
+        {meridiemPeriod}
       </p>
       <p
         className={
