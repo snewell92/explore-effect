@@ -10,14 +10,15 @@ import { DisplayError, ParseError } from "./error";
 import { DateDisplay } from "./DateDisplay";
 import { TimeDisplay } from "./TimeDisplay";
 
-export interface TodayProps {
+export interface RichDateTimeDisplayProps {
   input: string | null;
 }
 
 /** Display nicely formatted details about today, definitely has no quirks */
-export const Today = ({ input }: TodayProps) => {
+export const RichDateTimeDisplay = ({ input }: RichDateTimeDisplayProps) => {
+  const isToday = input === null;
   const { result, status, error } = useEffectSync(
-    input ? getDayFromInput(input) : getToday
+    isToday ? getToday : getDayFromInput(input)
   );
 
   if (status === "error") {
@@ -30,9 +31,12 @@ export const Today = ({ input }: TodayProps) => {
 
   return (
     <div className="text-center border-4 border-lime-300 p-4 rounded-lg mx-12 mb-6 min-h-80">
-      <h1 className="text-slate-700 text-2xl">Today is:</h1>
+      {isToday ? <h1 className="text-slate-700 text-2xl">Today is</h1> : null}
 
-      <DateDisplay today={result} />
+      <DateDisplay
+        today={result}
+        className={isToday ? "" : "text-2xl border-x-4"}
+      />
       <TimeDisplay today={result} />
       <Season season={result.season} />
       <Meal meal={result.nextMeal} />

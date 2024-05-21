@@ -20,17 +20,15 @@ export interface Meal {
   runningLate: boolean;
 }
 
-export function declareMeal(
+export const declareMeal = (
   name: HobbitMeal,
   hour: number,
   minute: number
-): Meal {
-  return {
-    name,
-    time: [hour, minute],
-    runningLate: false,
-  };
-}
+): Meal => ({
+  name,
+  time: [hour, minute],
+  runningLate: false,
+});
 
 // times are to my liking
 const HOBBIT_MEALS: Array<Meal> = [

@@ -114,7 +114,6 @@ function processDate(d: Date): GetToday {
   });
 }
 
-
 class DateParseError {
   readonly _tag = "DateParseError";
   readonly error: unknown;
@@ -124,12 +123,11 @@ class DateParseError {
   }
 }
 
-function isInvalidDate(d: Date): boolean {
-  return Number.isNaN(d.valueOf()) || String(d) === "Invalid Date";
-}
+const isInvalidDate = (d: Date) =>
+  Number.isNaN(d.valueOf()) || String(d) === "Invalid Date";
 
-function parseDate(input: string): Effect.Effect<Date, DateParseError, never> {
-  return Effect.try({
+const parseDate = (input: string) =>
+  Effect.try({
     try: () => {
       const d = new Date(input);
       if (isInvalidDate(d)) {
@@ -138,8 +136,7 @@ function parseDate(input: string): Effect.Effect<Date, DateParseError, never> {
       return d;
     },
     catch: (e) => new DateParseError(e),
-  })
-}
+  });
 
 export const getToday = freshDay.pipe(Effect.flatMap(processDate));
 export const getDayFromInput = (input: string) => parseDate(input).pipe(Effect.flatMap(processDate));

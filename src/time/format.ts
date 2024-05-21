@@ -1,8 +1,7 @@
 
 /** Pad left with numDigit zeroes */
-export function padNumWithZeroes(numDigits: number, n: number) {
-  return n.toString(10).padStart(numDigits, "0");
-}
+export const padNumWithZeroes = (numDigits: number, n: number) =>
+  n.toString(10).padStart(numDigits, "0");
 
 // Apparently this is what "browser support for plural ordinals" means
 

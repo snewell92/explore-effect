@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Today } from "./time/Today";
+import { RichDateTimeDisplay } from "./time/RichDateTimeDisplay";
 
 function incrementNum(a: number): number {
   return a + 1;
@@ -30,7 +30,7 @@ export function App() {
       </h1>
       <p className="mb-4 pl-2">With a bit of whimsy</p>
 
-      <Today key={`${todayMountKey}-${input}`} input={input} />
+      <RichDateTimeDisplay key={`${todayMountKey}-${input}`} input={input} />
 
       <button
         className="bg-lime-400 border-space-4 group border-4 block mx-auto px-12 py-2 text-2xl text-center border-purple-950 hover:border-teal-300"
