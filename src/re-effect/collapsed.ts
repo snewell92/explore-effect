@@ -33,6 +33,9 @@ export interface ErroredCollapse<TE> extends CollapsedResult<null, TE> {
 
 export type CollapsedStates<TR, TE> = EmptyCollapse | PendingCollapse | SuceededCollapse<TR> | ErroredCollapse<TE>;
 
+/** For blocking cases that will never enter their init or pending states. */
+export type CollapsedSyncStates<TR, TE> = SuceededCollapse<TR> | ErroredCollapse<TE>;
+
 export const EMPTY_COLLAPSE: EmptyCollapse = {
   result: null,
   error: null,

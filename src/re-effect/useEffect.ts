@@ -4,7 +4,7 @@ import { Effect, Cause } from "effect";
 
 import type { Effect as EFF } from "effect/Effect";
 import type { Exit as EX } from "effect/Exit";
-import { CollapsedState, CollapsedStates, EmptyCollapse, ErroredCollapse, PendingCollapse, SuceededCollapse, collapseError, collapseOk } from "./collapsed";
+import { CollapsedState, CollapsedStates, CollapsedSyncStates, EmptyCollapse, ErroredCollapse, PendingCollapse, SuceededCollapse, collapseError, collapseOk } from "./collapsed";
 import { compose } from "effect/Function";
 
 /** Collapse an Exit, only handles Fail type Causes
@@ -13,7 +13,7 @@ import { compose } from "effect/Function";
  * @returns A CollapsedResult, potentially with a string as the
  *   error if the Cause of the Exit is not a Fail type
  */
-function collapseExit<TR, TE>(exit: EX<TR, TE>): SuceededCollapse<TR> | ErroredCollapse<TE | string> {
+function collapseExit<TR, TE>(exit: EX<TR, TE>): SuceededCollapse<TR> | ErroredCollapse<TE> {
   switch (exit._tag) {
     case "Success":
       return collapseOk(exit.value);
@@ -21,11 +21,12 @@ function collapseExit<TR, TE>(exit: EX<TR, TE>): SuceededCollapse<TR> | ErroredC
       if (Cause.isFailType(exit.cause)) {
         return collapseError(exit.cause.error);
       } else {
-        console.warn("Non Fail Cause; falling back to toString");
-        console.warn(exit.cause);
+        // In general, this could probably be handled, but 
+        // for my demo, I only fail in known ways.
+        console.error("Non Fail Cause; aborting");
+        console.error(exit.cause);
 
-        const exitCause = exit.cause.toString();
-        return collapseError(exitCause);
+        throw new Error("Non Fail Cause; aborting");
       }
   }
 }
@@ -36,7 +37,7 @@ const collapseEffectSync = compose(Effect.runSyncExit, collapseExit);
  * 
  * @param effect An effect to run with Effect.runSync, once, by wrapping with useMemo(..., [])
 */
-export const useEffectSync = <TResult, TError>(effect: EFF<TResult, TError, never>): CollapsedStates<TResult, TError | string> => {
+export const useEffectSync = <TResult, TError>(effect: EFF<TResult, TError, never>): CollapsedSyncStates<TResult, TError> => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => collapseEffectSync(effect), []);
 }
