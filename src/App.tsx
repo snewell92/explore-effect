@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Today } from "./Today";
+import { Today } from "./time/Today";
 
 function incrementNum(a: number): number {
   return a + 1;
