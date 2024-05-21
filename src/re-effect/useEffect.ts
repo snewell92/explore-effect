@@ -5,6 +5,7 @@ import { Effect, Cause } from "effect";
 import type { Effect as EFF } from "effect/Effect";
 import type { Exit as EX } from "effect/Exit";
 import { CollapsedState, CollapsedStates, EmptyCollapse, ErroredCollapse, PendingCollapse, SuceededCollapse, collapseError, collapseOk } from "./collapsed";
+import { compose } from "effect/Function";
 
 /** Collapse an Exit, only handles Fail type Causes
  * 
@@ -29,22 +30,20 @@ function collapseExit<TR, TE>(exit: EX<TR, TE>): SuceededCollapse<TR> | ErroredC
   }
 }
 
+const collapseEffectSync = compose(Effect.runSyncExit, collapseExit);
+
 /** Runs a 'clean' synchronous effect, returning the result
  * 
- * @param effect An effect to run with Effect.runSync, once, by wrapping with useMemo
+ * @param effect An effect to run with Effect.runSync, once, by wrapping with useMemo(..., [])
 */
 export const useEffectSync = <TResult, TError>(effect: EFF<TResult, TError, never>): CollapsedStates<TResult, TError | string> => {
-  return useMemo(() => {
-    const exit = Effect.runSyncExit(effect);
-
-    return collapseExit(exit);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  return useMemo(() => collapseEffectSync(effect), []);
 }
 
 /** Runs an effect as a promise on mount
  * 
- * @param eff A referentially stable Effect to run
+ * @param eff A referentially stable Effect to run, wrapped in a useEffect(..., [])
 */
 export const useMountEffectPromise = <TR, TE>(eff: EFF<TR, TE>): CollapsedStates<TR, TE> => {
   const [result, setResult] = useState<TR | null>(null);
