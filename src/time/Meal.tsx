@@ -1,9 +1,8 @@
-// https://scifi.stackexchange.com/a/105212
-
 import { padNumWithZeroes } from "./format";
 import { twentyFourToTwelve } from "./time";
 
 // Taking the 7 meal interpretation, separating Dinner and Supper
+// https://scifi.stackexchange.com/a/105212
 export type HobbitMeal =
   | "Breakfast"
   | "Second Breakfast"
