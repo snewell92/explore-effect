@@ -108,7 +108,8 @@ const EXPLAIN_SYM = Symbol("explain");
 
 interface Explain {
   [EXPLAIN_SYM]: true;
-  explain(): string;
+  raw: Date | string | null;
+  msg: string;
 }
 
 function isExplainable(e: unknown): e is Explain {
@@ -124,18 +125,30 @@ function isExplainable(e: unknown): e is Explain {
 class InvalidSeconds implements Explain {
   readonly _tag = "InvalidSeconds";
   readonly [EXPLAIN_SYM] = true;
+  readonly msg: string;
+  readonly raw: string | Date | null;
 
-  explain(): string {
-    return "The second can't even.";
+  constructor(
+    date: Date | string | null,
+    msg: string = "The second can't even."
+  ) {
+    this.msg = msg;
+    this.raw = date;
   }
 }
 
 class InvalidSeason implements Explain {
   readonly _tag = "InvalidSeason";
   readonly [EXPLAIN_SYM] = true;
+  readonly msg: string;
+  readonly raw: string | Date | null;
 
-  explain(): string {
-    return "The season is too cold.";
+  constructor(
+    date: Date | string | null,
+    msg: string = "This season is too cold."
+  ) {
+    this.msg = msg;
+    this.raw = date;
   }
 }
 
@@ -197,7 +210,7 @@ function processDate(d: Date): Effect.Effect<Today, HandledErrors, never> {
 
   if (second % 2 === 0) {
     // we live on the off beat and swing thru the down beats.
-    return Effect.fail(new InvalidSeconds());
+    return Effect.fail(new InvalidSeconds(d));
   }
 
   const monthName = d.toLocaleString("default", { month: "long" }) as Month;
@@ -205,7 +218,7 @@ function processDate(d: Date): Effect.Effect<Today, HandledErrors, never> {
 
   if (season === "Winter") {
     // too cold to swing, cats cuddle in the winter.
-    return Effect.fail(new InvalidSeason());
+    return Effect.fail(new InvalidSeason(d));
   }
 
   const meridiemPeriod = hour < 12 ? "am" : "pm";
@@ -250,6 +263,18 @@ const SEASON_BITS: Record<Today["season"], Bits> = {
   },
 };
 
+const rawToString = (raw: string | Date | null): string => {
+  if (raw == null) {
+    return "Unknown";
+  }
+
+  if (typeof raw === "string") {
+    return raw;
+  }
+
+  return raw.toISOString();
+};
+
 /** Display nicely formatted details about today, definitely has no quirks */
 export const Today = () => {
   const { result, status, error } = useEffectSync(getToday);
@@ -257,8 +282,22 @@ export const Today = () => {
   if (status !== "success") {
     return (
       <div className="text-center border-4 border-red-600 p-4 rounded-lg mx-12 mb-6 min-h-80">
-        <h1 className="text-slate-700 text-2xl">What is today?</h1>
-        {isExplainable(error) ? <p>{error.explain()}</p> : <p>{error}</p>}
+        <h1 className="text-slate-700 text-2xl mb-4">What time is it?</h1>
+        {isExplainable(error) ? (
+          <div className="text-left">
+            <p>
+              Error message: <span className="font-mono">{error.msg}</span>
+            </p>
+            <p>
+              Full Date:{" "}
+              <span className="text-sm font-mono">
+                {rawToString(error.raw)}
+              </span>
+            </p>
+          </div>
+        ) : (
+          <p>{error}</p>
+        )}
       </div>
     );
   }
