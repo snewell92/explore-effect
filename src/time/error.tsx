@@ -1,12 +1,36 @@
-export interface Explain {
-  _tag: string;
-  raw: Date;
-  msg: string;
+import { Effect } from "effect";
+
+type EvenSeconds = "EVEN_SECONDS";
+type TooEarly = "TOO_EARLY";
+type TooCold = "TOO_COLD";
+
+export type HandledErrors = EvenSeconds | TooCold | TooEarly;
+
+export interface DateError {
+  type: HandledErrors;
+  _tag: "DateError";
+  date?: Date;
 }
 
+export const raiseDateError = (
+  type: HandledErrors,
+  date?: Date
+): Effect.Effect<never, DateError, never> =>
+  Effect.fail({
+    type,
+    date,
+    _tag: "DateError",
+  });
+
 export interface DisplayErrorProps {
-  error: Explain;
+  error: DateError;
 }
+
+const ERROR_MESSAGES: Record<HandledErrors, string> = {
+  EVEN_SECONDS: "Given time was on an even second - perposterous.",
+  TOO_COLD: "This time would be way too cold, stay inside",
+  TOO_EARLY: "sleepy, going back to bed",
+};
 
 export const DisplayError = ({ error }: DisplayErrorProps) => {
   return (
@@ -14,12 +38,17 @@ export const DisplayError = ({ error }: DisplayErrorProps) => {
       <h1 className="text-slate-700 text-2xl mb-4">What time is it?</h1>
       <div className="text-left">
         <p>
-          Error message: <span className="font-mono">{error.msg}</span>
+          Error message:{" "}
+          <span className="font-mono">{ERROR_MESSAGES[error.type]}</span>
         </p>
-        <p>
-          Full Date:{" "}
-          <span className="text-sm font-mono">{error.raw.toISOString()}</span>
-        </p>
+        {typeof error.date === "undefined" ? null : (
+          <p>
+            Full Date:{" "}
+            <span className="text-sm font-mono">
+              {error.date.toISOString()}
+            </span>
+          </p>
+        )}
       </div>
     </div>
   );

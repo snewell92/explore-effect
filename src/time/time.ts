@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import { Meal, nextMeal } from "./Meal";
-import { InvalidSeason, Season, getSeason } from "./Season";
+import { Season, getSeason } from "./Season";
 import { ordinal, padNumWithZeroes } from "./format";
-import { Explain } from "./error";
+import { DateError, raiseDateError } from "./error";
 
 export type Month =
   | "January"
@@ -33,37 +33,7 @@ export interface Today {
   nextMeal: Meal;
 }
 
-class InvalidSeconds implements Explain {
-  readonly _tag = "InvalidSeconds";
-  readonly msg: string;
-  readonly raw: Date;
-
-  constructor(
-    date: Date,
-    msg: string = "The second can't even."
-  ) {
-    this.msg = msg;
-    this.raw = date;
-  }
-}
-
-class TooEarly implements Explain {
-  readonly _tag = "TooEarly";
-  readonly msg: string;
-  readonly raw: Date;
-
-  constructor(
-    date: Date,
-    msg: string = "It's too early, back to bed."
-  ) {
-    this.msg = msg;
-    this.raw = date;
-  }
-}
-
-type HandledErrors = InvalidSeconds | InvalidSeason | TooEarly;
-
-type GetToday = Effect.Effect<Today, HandledErrors, never>;
+type GetToday = Effect.Effect<Today, DateError, never>;
 
 /** Converts 24 hour time to 12 hour time. Sorry. */
 export function twentyFourToTwelve(hour: number): [string, "am" | "pm"] {
@@ -79,7 +49,6 @@ export function twentyFourToTwelve(hour: number): [string, "am" | "pm"] {
   return [twelveHourTime, meridiemPeriod];
 }
 
-
 function processDate(d: Date): GetToday {
   const hour = d.getHours();
   const second = d.getSeconds();
@@ -87,7 +56,7 @@ function processDate(d: Date): GetToday {
 
   if (second % 2 === 0) {
     // we live on the off beat and swing thru the down beats.
-    return Effect.fail(new InvalidSeconds(d));
+    return raiseDateError("EVEN_SECONDS", d);
   }
 
   const monthName = d.toLocaleString("default", { month: "long" }) as Month;
@@ -95,11 +64,11 @@ function processDate(d: Date): GetToday {
 
   if (season === "Winter") {
     // too cold to swing, cats cuddle in the winter.
-    return Effect.fail(new InvalidSeason(d));
+    return raiseDateError("TOO_COLD", d);
   }
 
   if (hour < 5) {
-    return Effect.fail(new TooEarly(d));
+    return raiseDateError("TOO_EARLY", d);
   }
 
   const meal = nextMeal(hour, minute);
@@ -133,7 +102,7 @@ const isInvalidDate = (d: Date) =>
 
 const parseDate = (input: string) =>
   Effect.try({
-    try: () => {
+    try() {
       const d = new Date(input);
       if (isInvalidDate(d)) {
         throw new Error("Invalid date")

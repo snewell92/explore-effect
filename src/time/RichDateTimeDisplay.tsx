@@ -22,6 +22,14 @@ export const RichDateTimeDisplay = ({ input }: RichDateTimeDisplayProps) => {
   );
 
   if (status === "error") {
+    if (error == null) {
+      return (
+        <div className="text-red-500 underline text-4xl">
+          Something insane happened. Close the tab.
+        </div>
+      );
+    }
+
     if (error._tag === "DateParseError") {
       return <ParseError input={input || ""} />;
     }

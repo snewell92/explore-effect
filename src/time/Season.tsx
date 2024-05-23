@@ -1,4 +1,3 @@
-import { Explain } from "./error";
 import { Month } from "./time";
 
 export type Season = "Spring" | "Summer" | "Autumn" | "Winter";
@@ -21,17 +20,6 @@ export function getSeason(month: Month): Season {
     case "October":
     case "November":
       return "Autumn";
-  }
-}
-
-export class InvalidSeason implements Explain {
-  readonly _tag = "InvalidSeason";
-  readonly msg: string;
-  readonly raw: Date;
-
-  constructor(date: Date, msg: string = "This season is too cold.") {
-    this.msg = msg;
-    this.raw = date;
   }
 }
 
