@@ -2,14 +2,55 @@
  * calculate date/time/calendar display from today's date
  */
 
-import { useEffectSync } from "~/re-effect/useEffect";
+import { GetEffectSyncErrors, useEffectSync } from "~/re-effect/useEffect";
 import { Meal } from "./Meal";
-import { getDayFromInput, getToday } from "./time";
+import { getDayFromInput, getToday, Today } from "./time";
 import { Season } from "./Season";
 import { DisplayError, ParseError } from "./error";
 import { DateDisplay } from "./DateDisplay";
 import { TimeDisplay } from "./TimeDisplay";
 import { isString } from "effect/Predicate";
+
+// awkard name..
+const ShowToday = ({ today, isToday }: { today: Today; isToday: boolean }) => (
+  <div className="text-center border-4 border-lime-300 p-4 rounded-lg mx-12 mb-6 min-h-80">
+    {isToday ? <h1 className="text-slate-700 text-2xl">Today is</h1> : null}
+
+    <DateDisplay
+      today={today}
+      className={isToday ? "" : "text-2xl border-x-4"}
+    />
+    <TimeDisplay today={today} />
+    <Season season={today.season} />
+    <Meal meal={today.nextMeal} />
+  </div>
+);
+
+type Errors =
+  | GetEffectSyncErrors<typeof getToday>
+  | GetEffectSyncErrors<ReturnType<typeof getDayFromInput>>;
+
+const ShowError = ({
+  error,
+  input,
+}: {
+  error: Errors;
+  input: string | null;
+}) => {
+  if (error == null || isString(error)) {
+    return (
+      <div className="text-red-500 underline text-4xl">
+        Something insane happened. Close the tab.
+      </div>
+    );
+  }
+
+  if (error._tag === "DateParseError") {
+    return <ParseError input={input || ""} />;
+  }
+
+  return <DisplayError error={error} />;
+};
 
 export interface RichDateTimeDisplayProps {
   input: string | null;
@@ -23,32 +64,8 @@ export const RichDateTimeDisplay = ({ input }: RichDateTimeDisplayProps) => {
   );
 
   if (status === "error") {
-    if (error == null || isString(error)) {
-      return (
-        <div className="text-red-500 underline text-4xl">
-          Something insane happened. Close the tab.
-        </div>
-      );
-    }
-
-    if (error._tag === "DateParseError") {
-      return <ParseError input={input || ""} />;
-    }
-
-    return <DisplayError error={error} />;
+    return <ShowError error={error} input={input} />;
   }
 
-  return (
-    <div className="text-center border-4 border-lime-300 p-4 rounded-lg mx-12 mb-6 min-h-80">
-      {isToday ? <h1 className="text-slate-700 text-2xl">Today is</h1> : null}
-
-      <DateDisplay
-        today={result}
-        className={isToday ? "" : "text-2xl border-x-4"}
-      />
-      <TimeDisplay today={result} />
-      <Season season={result.season} />
-      <Meal meal={result.nextMeal} />
-    </div>
-  );
+  return <ShowToday today={result} isToday={isToday} />;
 };

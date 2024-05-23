@@ -18,6 +18,7 @@ export type Month =
   | "November"
   | "December";
 
+// no Schema or Data... yet!
 export interface Today {
   monthName: Month;
   ordinalDate: string;

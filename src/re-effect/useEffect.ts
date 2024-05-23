@@ -17,6 +17,9 @@ export const useEffectSync = <TResult, TError>(effect: EFF<TResult, TError, neve
   return useMemo(() => collapseEffectSync(effect), []);
 }
 
+/** Gives you the errors useEffectSync would yield */
+export type GetEffectSyncErrors<TEffect extends EFF<any, any, any>> = EFF.Error<TEffect> | string;
+
 /** Runs an effect as a promise on mount
  * 
  * @param eff A referentially stable Effect to run, wrapped in a useEffect(..., [])
