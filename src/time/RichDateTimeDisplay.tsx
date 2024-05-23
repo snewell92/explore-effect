@@ -9,6 +9,7 @@ import { Season } from "./Season";
 import { DisplayError, ParseError } from "./error";
 import { DateDisplay } from "./DateDisplay";
 import { TimeDisplay } from "./TimeDisplay";
+import { isString } from "effect/Predicate";
 
 export interface RichDateTimeDisplayProps {
   input: string | null;
@@ -22,7 +23,7 @@ export const RichDateTimeDisplay = ({ input }: RichDateTimeDisplayProps) => {
   );
 
   if (status === "error") {
-    if (error == null) {
+    if (error == null || isString(error)) {
       return (
         <div className="text-red-500 underline text-4xl">
           Something insane happened. Close the tab.
