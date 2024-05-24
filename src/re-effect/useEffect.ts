@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Effect, Cause, Exit } from "effect";
-
 import type { Effect as EFF } from "effect/Effect";
+
 import { CollapsedEffectState, CollapsedStates, CollapsedSyncStates, collapseExit } from "./collapsed";
 import { compose } from "effect/Function";
 

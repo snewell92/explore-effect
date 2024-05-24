@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { type Effect as EFF } from "effect/Effect";
 
 type EvenSeconds = "EVEN_SECONDS";
 type TooEarly = "TOO_EARLY";
@@ -15,7 +16,7 @@ export interface DateError {
 export const raiseDateError = (
   type: HandledErrors,
   date?: Date
-): Effect.Effect<never, DateError, never> =>
+): EFF<never, DateError, never> =>
   Effect.fail({
     type,
     date,

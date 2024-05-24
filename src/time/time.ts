@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { type Effect as EFF } from "effect/Effect";
 import { Meal, nextMeal } from "./Meal";
 import { Season, getSeason } from "./Season";
 import { ordinal, padNumWithZeroes } from "./format";
@@ -34,7 +35,7 @@ export interface Today {
   nextMeal: Meal;
 }
 
-type GetToday = Effect.Effect<Today, DateError, never>;
+type GetToday = EFF<Today, DateError, never>;
 
 /** Converts 24 hour time to 12 hour time. Sorry. */
 export function twentyFourToTwelve(hour: number): [string, "am" | "pm"] {
