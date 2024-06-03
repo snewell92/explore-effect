@@ -1,8 +1,8 @@
-/** A simple sync example of a computation in Effect to
+/** A simple example of showing computation in Effect to
  * calculate date/time/calendar display from today's date
  */
 
-import { useSync, type GetSyncErrors } from "~/re-effect/useSync";
+import { type GetSyncErrors } from "~/re-effect/useSync";
 import { Meal } from "./Meal";
 import { getDayFromInput, getToday, Today } from "./time";
 import { Season } from "./Season";
@@ -10,6 +10,7 @@ import { DisplayError, ParseError } from "./error";
 import { DateDisplay } from "./DateDisplay";
 import { TimeDisplay } from "./TimeDisplay";
 import { isString } from "effect/Predicate";
+import { usePromise } from "~/re-effect/usePromise";
 
 // awkard name..
 const ShowToday = ({ today, isToday }: { today: Today; isToday: boolean }) => (
@@ -59,9 +60,13 @@ export interface RichDateTimeDisplayProps {
 /** Display nicely formatted details about today, definitely has no quirks */
 export const RichDateTimeDisplay = ({ input }: RichDateTimeDisplayProps) => {
   const isToday = input === null;
-  const { result, status, error } = useSync(
+  const { result, status, error } = usePromise(
     isToday ? getToday : getDayFromInput(input)
   );
+
+  if (status === "init" || status === "processing") {
+    return <div>thinking 🤔</div>;
+  }
 
   if (status === "error") {
     return <ShowError error={error} input={input} />;
