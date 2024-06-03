@@ -32,11 +32,11 @@ const { $match: matchResolved } = Data.taggedEnum<ResolvedCollapseDef>();
 export const EMPTY_COLLAPSE = Empty();
 export const PENDING_COLLAPSE = Pending();
 
-export function collapseOk<TR>(result: TR) {
+export function collapseOk<Result>(result: Result) {
   return Success({ result });
 }
 
-export function collapseError<TE>(error: TE) {
+export function collapseError<Error>(error: Error) {
   return Error({ error });
 }
 
@@ -44,18 +44,20 @@ export function collapseError<TE>(error: TE) {
 export const matchCollapse = matchResolved;
 
 /** Create a strongly typed match constructor for any resolved collapse */
-export function createResolvedMatchCollapse<TR, TE>() {
-  const pinnedEnum = Data.taggedEnum<ResolvedCollapse<TR, TE>>();
+export function createResolvedMatchCollapse<Result, Error>() {
+  const pinnedEnum = Data.taggedEnum<ResolvedCollapse<Result, Error>>();
   return pinnedEnum.$match;
 }
 
 /** Create a strongly typed match constructor for any resolved collapse */
-export function createMatchCollapse<TR, TE>() {
-  const pinnedEnum = Data.taggedEnum<Collapse<TR, TE>>();
+export function createMatchCollapse<Result, Error>() {
+  const pinnedEnum = Data.taggedEnum<Collapse<Result, Error>>();
   return pinnedEnum.$match;
 }
 
-type CauseMatcher<Z, E> = Parameters<typeof matchCause<Z, E>>[1];
+type CauseMatcher<ReducedValue, Error> = Parameters<
+  typeof matchCause<ReducedValue, Error>
+>[1];
 
 const CAUSE_MATCHER = {
   onFail: collapseError,
@@ -68,10 +70,13 @@ const CAUSE_MATCHER = {
     collapseError("Sequential failure, expecting retry"),
 } as CauseMatcher<any, any>;
 
-const collapseCause = <TE>(cause: Cause<TE>): Collapse<never, TE | string> =>
-  matchCause(cause, CAUSE_MATCHER);
+const collapseCause = <Error>(
+  cause: Cause<Error>
+): Collapse<never, Error | string> => matchCause(cause, CAUSE_MATCHER);
 
-type ExitMatcher<E, A, Z1, Z2> = FirstParam<typeof matchExit<E, A, Z1, Z2>>;
+type ExitMatcher<Error, Result, Z1, Z2> = FirstParam<
+  typeof matchExit<Error, Result, Z1, Z2>
+>;
 
 const EXIT_MATCHER = {
   onSuccess: collapseOk,
@@ -82,6 +87,6 @@ const EXIT_MATCHER = {
  * The underlying Cause matching may go down an Exit path without an Error available,
  * and will construct a string in that case - hence the `| string` added to the error type.
  */
-export const collapseExit = <TR, TE>(
-  exit: Exit<TR, TE>
-): ResolvedCollapse<TR, TE | string> => matchExit(exit, EXIT_MATCHER);
+export const collapseExit = <Result, Error>(
+  exit: Exit<Result, Error>
+): ResolvedCollapse<Result, Error | string> => matchExit(exit, EXIT_MATCHER);

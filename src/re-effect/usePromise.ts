@@ -16,18 +16,17 @@ import {
 import { FirstParam } from "./type-utils";
 
 type Actions<Result, Error> = Data.TaggedEnum<{
-  Process: {};
-  Success: { readonly result: Result };
-  Error: { readonly error: Error };
+  Begin: {};
+  Succeed: { readonly result: Result };
+  Fail: { readonly error: Error };
 }>;
 
-const { Process, Success, Error, $match } =
-  Data.taggedEnum<Actions<any, any>>();
+const { Begin, Succeed, Fail, $match } = Data.taggedEnum<Actions<any, any>>();
 
 const actionMatcher = $match({
-  Process: (_) => structuredClone(PENDING_COLLAPSE),
-  Success: (s) => collapseOk(s.result),
-  Error: (e) => collapseError(e.error),
+  Begin: (_) => structuredClone(PENDING_COLLAPSE),
+  Succeed: (s) => collapseOk(s.result),
+  Fail: (e) => collapseError(e.error),
 });
 
 function promiseMachineReducer<Result, Error>(
@@ -43,17 +42,17 @@ function createEffectCollapse<Result, Error>(
 ) {
   return () => {
     const controller = new AbortController();
-    dispatch(Process());
+    dispatch(Begin());
 
     Effect.runPromiseExit(eff, { signal: controller.signal }).then((exit) => {
       const collapsed = collapseExit(exit);
 
       matchCollapse({
         Success(s) {
-          dispatch(Success(s));
+          dispatch(Succeed(s));
         },
         Error(e) {
-          dispatch(Error(e));
+          dispatch(Fail(e));
         },
       })(collapsed);
     });
@@ -66,16 +65,18 @@ function createEffectCollapse<Result, Error>(
  *
  * @param eff A referentially stable Effect to run, wrapped in a useEffect(..., [])
  */
-export const usePromise = <TR, TE>(eff: EFF<TR, TE>) => {
-  const [state, dispatch] = useReducer<typeof promiseMachineReducer<TR, TE>>(
-    promiseMachineReducer,
-    EMPTY_COLLAPSE
-  );
+export const usePromise = <Result, Error>(eff: EFF<Result, Error>) => {
+  const [state, dispatch] = useReducer<
+    typeof promiseMachineReducer<Result, Error>
+  >(promiseMachineReducer, EMPTY_COLLAPSE);
 
   useEffect(createEffectCollapse(eff, dispatch), []);
 
   // pin the types so we can have exhaustive checking for cases
-  const matcher = useCallback(createMatchCollapse<TR, TE | string>(), []);
+  const matcher = useCallback(
+    createMatchCollapse<Result, Error | string>(),
+    []
+  );
 
   type CollapseMatcher = FirstParam<typeof matcher>;
 
