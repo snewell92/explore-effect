@@ -115,10 +115,7 @@ const parseDate = (input: string) =>
   });
 
 // I don't think new Date w/ no args could ever fail (?)
-const freshDay = Effect.delay(
-  Effect.sync(() => new Date()),
-  "2 seconds"
-);
+const freshDay = Effect.sync(() => new Date());
 
 export const getToday = freshDay.pipe(Effect.flatMap(processDate));
 export const getDayFromInput = (input: string) =>

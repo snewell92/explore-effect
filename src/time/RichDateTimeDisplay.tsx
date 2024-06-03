@@ -12,8 +12,12 @@ import { TimeDisplay } from "./TimeDisplay";
 import { isString } from "effect/Predicate";
 import { usePromise } from "~/re-effect/usePromise";
 
-// awkard name..
-const ShowToday = ({ today, isToday }: { today: Today; isToday: boolean }) => (
+interface ShowTodayProps {
+  today: Today;
+  isToday: boolean;
+}
+
+const ShowToday = ({ today, isToday }: ShowTodayProps) => (
   <div className="text-center border-4 border-lime-300 p-4 rounded-lg mx-12 mb-6 min-h-80">
     {isToday ? <h1 className="text-slate-700 text-2xl">Today is</h1> : null}
 
@@ -31,13 +35,12 @@ type Errors =
   | GetSyncErrors<typeof getToday>
   | GetSyncErrors<ReturnType<typeof getDayFromInput>>;
 
-const ShowError = ({
-  error,
-  input,
-}: {
+interface ShowErrorProps {
   error: Errors;
   input: string | null;
-}) => {
+}
+
+const ShowError = ({ error, input }: ShowErrorProps) => {
   if (error == null || isString(error)) {
     return (
       <div className="text-red-500 underline text-4xl">
@@ -57,20 +60,17 @@ export interface RichDateTimeDisplayProps {
   input: string | null;
 }
 
+const Thinking = () => <div>thinking 🤔</div>;
+
 /** Display nicely formatted details about today, definitely has no quirks */
 export const RichDateTimeDisplay = ({ input }: RichDateTimeDisplayProps) => {
   const isToday = input === null;
-  const { result, status, error } = usePromise(
-    isToday ? getToday : getDayFromInput(input)
-  );
+  const [match] = usePromise(isToday ? getToday : getDayFromInput(input));
 
-  if (status === "init" || status === "processing") {
-    return <div>thinking 🤔</div>;
-  }
-
-  if (status === "error") {
-    return <ShowError error={error} input={input} />;
-  }
-
-  return <ShowToday today={result} isToday={isToday} />;
+  return match({
+    Pending: Thinking,
+    Empty: Thinking,
+    Success: ({ result }) => <ShowToday today={result} isToday={isToday} />,
+    Error: ({ error }) => <ShowError error={error} input={input} />,
+  });
 };

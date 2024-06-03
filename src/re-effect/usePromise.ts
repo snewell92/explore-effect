@@ -1,15 +1,19 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useCallback, useEffect, useReducer } from "react";
 
-import { Effect, Cause, Exit, Data } from "effect";
+import { Effect, Data } from "effect";
 import type { Effect as EFF } from "effect/Effect";
 
 import {
-  CollapsedStates,
+  Collapse,
   EMPTY_COLLAPSE,
   PENDING_COLLAPSE,
   collapseError,
+  collapseExit,
   collapseOk,
+  createMatchCollapse,
+  matchCollapse,
 } from "./collapsed";
+import { FirstParam } from "./type-utils";
 
 type Actions<Result, Error> = Data.TaggedEnum<{
   Process: {};
@@ -27,9 +31,9 @@ const actionMatcher = $match({
 });
 
 function promiseMachineReducer<Result, Error>(
-  _state: CollapsedStates<Result, Error | string>,
+  _state: Collapse<Result, Error | string>,
   action: Actions<Result, Error>
-): CollapsedStates<Result, Error | string> {
+): Collapse<Result, Error | string> {
   return actionMatcher(action);
 }
 
@@ -41,33 +45,18 @@ function createEffectCollapse<Result, Error>(
     const controller = new AbortController();
     dispatch(Process());
 
-    Effect.runPromiseExit(eff, { signal: controller.signal }).then((exit) =>
-      Exit.match(exit, {
-        onSuccess(result) {
-          dispatch(Success({ result }));
+    Effect.runPromiseExit(eff, { signal: controller.signal }).then((exit) => {
+      const collapsed = collapseExit(exit);
+
+      matchCollapse({
+        Success(s) {
+          dispatch(Success(s));
         },
-        onFailure(cause) {
-          Cause.match(cause, {
-            onFail(error) {
-              dispatch(Error({ error }));
-            },
-            onDie: (_defect) =>
-              dispatch(
-                Error({ error: "Unexpected defect: " + cause.toJSON() })
-              ),
-            onInterrupt: (fiberId) => {
-              console.warn(`Interrupted [${fiberId}] - expecting retry`);
-            },
-            onParallel: (_l, _r) =>
-              dispatch(Error({ error: "Unexpected parallel error" })),
-            onSequential: (_l, _r) => {
-              console.warn("Sequential failure, expecting retry");
-            },
-            onEmpty: null,
-          });
+        Error(e) {
+          dispatch(Error(e));
         },
-      })
-    );
+      })(collapsed);
+    });
 
     return controller.abort.bind(controller);
   };
@@ -77,9 +66,7 @@ function createEffectCollapse<Result, Error>(
  *
  * @param eff A referentially stable Effect to run, wrapped in a useEffect(..., [])
  */
-export const usePromise = <TR, TE>(
-  eff: EFF<TR, TE>
-): CollapsedStates<TR, TE | string> => {
+export const usePromise = <TR, TE>(eff: EFF<TR, TE>) => {
   const [state, dispatch] = useReducer<typeof promiseMachineReducer<TR, TE>>(
     promiseMachineReducer,
     EMPTY_COLLAPSE
@@ -87,5 +74,13 @@ export const usePromise = <TR, TE>(
 
   useEffect(createEffectCollapse(eff, dispatch), []);
 
-  return state;
+  // pin the types so we can have exhaustive checking for cases
+  const matcher = useCallback(createMatchCollapse<TR, TE | string>(), []);
+
+  type CollapseMatcher = FirstParam<typeof matcher>;
+
+  const match = <Cases extends CollapseMatcher>(cases: Cases) =>
+    matcher(cases)(state);
+
+  return [match, state] as const;
 };
