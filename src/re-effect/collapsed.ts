@@ -49,7 +49,7 @@ export function createResolvedMatchCollapse<Result, Error>() {
   return pinnedEnum.$match;
 }
 
-/** Create a strongly typed match constructor for any resolved collapse */
+/** Create a strongly typed match constructor for any collapse */
 export function createMatchCollapse<Result, Error>() {
   const pinnedEnum = Data.taggedEnum<Collapse<Result, Error>>();
   return pinnedEnum.$match;

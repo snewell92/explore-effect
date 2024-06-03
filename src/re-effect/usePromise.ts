@@ -11,6 +11,7 @@ import {
   collapseExit,
   collapseOk,
   createMatchCollapse,
+  createResolvedMatchCollapse,
   matchCollapse,
 } from "./collapsed";
 import { FirstParam } from "./type-utils";
@@ -29,6 +30,13 @@ const actionMatcher = $match({
   Fail: (e) => collapseError(e.error),
 });
 
+const R: React.Reducer<Collapse<string, string>, Actions<string, string>> = (
+  s,
+  a
+) => {
+  return actionMatcher(a);
+};
+
 function promiseMachineReducer<Result, Error>(
   _state: Collapse<Result, Error | string>,
   action: Actions<Result, Error>
@@ -44,10 +52,12 @@ function createEffectCollapse<Result, Error>(
     const controller = new AbortController();
     dispatch(Begin());
 
+    const matcher = createResolvedMatchCollapse<Result, Error | string>();
+
     Effect.runPromiseExit(eff, { signal: controller.signal }).then((exit) => {
       const collapsed = collapseExit(exit);
 
-      matchCollapse({
+      matcher({
         Success(s) {
           dispatch(Succeed(s));
         },
