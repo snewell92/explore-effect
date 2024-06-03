@@ -8,7 +8,6 @@ import {
   EMPTY_COLLAPSE,
   PENDING_COLLAPSE,
   collapseError,
-  collapseExit,
   collapseOk,
 } from "./collapsed";
 

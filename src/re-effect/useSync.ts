@@ -7,7 +7,7 @@ import { CollapsedSyncStates, collapseExit } from "./collapsed";
 import { compose } from "effect/Function";
 
 /** Gives you the errors useSync would yield */
-export type GetSyncErrors<TEffect extends EFF<any, any, any>> =
+export type GetSyncErrors<TEffect extends EFF<unknown, unknown, unknown>> =
   | EFF.Error<TEffect>
   | string;
 
