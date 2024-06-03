@@ -1,30 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Effect, Cause, Exit } from "effect";
 import type { Effect as EFF } from "effect/Effect";
 
-import { CollapsedEffectState, CollapsedStates, CollapsedSyncStates, collapseExit } from "./collapsed";
-import { compose } from "effect/Function";
-
-const collapseEffectSync = compose(Effect.runSyncExit, collapseExit);
-
-/** Runs a 'clean' synchronous effect, returning the result
- * 
- * @param effect An effect to run with Effect.runSync, once, by wrapping with useMemo(..., [])
-*/
-export const useEffectSync = <TResult, TError>(effect: EFF<TResult, TError, never>): CollapsedSyncStates<TResult, TError | string> => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => collapseEffectSync(effect), []);
-}
+import { CollapsedEffectState, CollapsedStates } from "./collapsed";
 
 /** Gives you the errors useEffectSync would yield */
-export type GetEffectSyncErrors<TEffect extends EFF<any, any, any>> = EFF.Error<TEffect> | string;
+export type GetEffectSyncErrors<TEffect extends EFF<any, any, any>> =
+  | EFF.Error<TEffect>
+  | string;
 
 /** Runs an effect as a promise on mount
- * 
+ *
  * @param eff A referentially stable Effect to run, wrapped in a useEffect(..., [])
-*/
-export const useMountEffectPromise = <TR, TE>(eff: EFF<TR, TE>): CollapsedStates<TR, TE | string> => {
+ */
+export const usePromise = <TR, TE>(
+  eff: EFF<TR, TE>
+): CollapsedStates<TR, TE | string> => {
   // TODO consider useReducer
   const [result, setResult] = useState<TR | null>(null);
   const [status, setStatus] = useState<CollapsedEffectState>("init");
@@ -34,7 +26,7 @@ export const useMountEffectPromise = <TR, TE>(eff: EFF<TR, TE>): CollapsedStates
     const controller = new AbortController();
     setStatus("processing");
 
-    Effect.runPromiseExit(eff, { signal: controller.signal }).then(exit =>
+    Effect.runPromiseExit(eff, { signal: controller.signal }).then((exit) =>
       Exit.match(exit, {
         onSuccess(result) {
           setResult(result);
@@ -64,14 +56,14 @@ export const useMountEffectPromise = <TR, TE>(eff: EFF<TR, TE>): CollapsedStates
           if (setToError) {
             setStatus("error");
           }
-        }
+        },
       })
     );
 
     return controller.abort.bind(controller);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // we need to as to get type narrowing to work properly when using this
   return { result, error, status } as CollapsedStates<TR, TE | string>;
-}
+};
