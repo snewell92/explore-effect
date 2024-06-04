@@ -1,5 +1,4 @@
 import React, { useReducer, useEffect } from "react";
-import { ExtractByTag } from "./re-effect/type-utils";
 import { Data } from "effect";
 
 type Actions<Result, Error> = Data.TaggedEnum<{
@@ -50,7 +49,7 @@ const useFlipFlop = (dispatch: React.Dispatch<Actions<any, any>>) => {
 
 const INITIAL_STATE = Empty();
 
-type CompletedCase = ExtractByTag<State, "Completed">;
+type CompletedCase = Data.TaggedEnum.Value<State, "Completed">;
 
 const DisplayCompleted = ({ answer }: CompletedCase) => (
   <h1 className="text-2xl">
@@ -60,7 +59,7 @@ const DisplayCompleted = ({ answer }: CompletedCase) => (
 
 const DisplayEmpty = () => <div>emptiness...</div>;
 
-type FailedCase = ExtractByTag<State, "Failed">;
+type FailedCase = Data.TaggedEnum.Value<State, "Failed">;
 const DisplayFailed = ({ errorMessage }: FailedCase) => (
   <p className="text-orange-400">{errorMessage}</p>
 );

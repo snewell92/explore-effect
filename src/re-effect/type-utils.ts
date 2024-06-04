@@ -9,12 +9,3 @@ export type FirstParam<TFunc extends Func> = Parameters<TFunc>[1];
 export interface Tagged {
   readonly _tag: string;
 }
-
-/** Gives a union of the names of the _tag as Strings  */
-export type AllTags<T extends Tagged> = T["_tag"];
-
-/** Extract one member of a union by its tag name */
-export type ExtractByTag<
-  TUnion extends Tagged,
-  TagName extends AllTags<TUnion>
-> = Extract<TUnion, { _tag: TagName }>;
