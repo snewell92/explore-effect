@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { RichDateTimeDisplay } from "./time/RichDateTimeDisplay";
-import { FlipFlop } from "./FlipFlip";
+import { FlipFlop } from "./FlipFlop";
 
 function incrementNum(a: number): number {
   return a + 1;
