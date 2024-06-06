@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@effect/platform": "^0.55.5",
+    "@effect/platform-browser": "^0.35.5",
     "effect": "^3.2.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
