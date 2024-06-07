@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Data, Effect } from "effect";
 import { type Effect as EFF } from "effect/Effect";
 import { Meal, nextMeal } from "./Meal";
 import { Season, SeasonService } from "./Season";
@@ -35,6 +35,8 @@ export interface Today {
   season: Season;
   nextMeal: Meal;
 }
+
+const Today = Data.case<Today>();
 
 type GetToday = EFF<Today, DateError, Services>;
 
@@ -75,7 +77,7 @@ function processDate(d: Date): GetToday {
     const meal = nextMeal(hour, minute);
     const [twelveHourTime, meridiemPeriod] = twentyFourToTwelve(hour);
 
-    const todayInfo: Today = {
+    return Today({
       monthName,
       season,
       ordinalDate: ordinal(d.getDate()),
@@ -86,9 +88,7 @@ function processDate(d: Date): GetToday {
       second: padNumWithZeroes(2, second),
       meridiem: meridiemPeriod,
       nextMeal: meal,
-    };
-
-    return todayInfo;
+    });
   });
 }
 
