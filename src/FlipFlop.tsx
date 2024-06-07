@@ -27,7 +27,7 @@ const {
 const actionToStateMatcher = $match({
   Begin: (_) => Empty(),
   Fail: ({ error }) => Failed({ errorMessage: String(error) }),
-  Succeed: ({ result }) => Completed({ answer: 42 }),
+  Succeed: (_result) => Completed({ answer: 42 }),
 });
 
 const reducer: React.Reducer<State, Actions<any, any>> = (_s, actions) =>
