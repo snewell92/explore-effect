@@ -1,9 +1,10 @@
 import { Effect } from "effect";
 import { type Effect as EFF } from "effect/Effect";
 import { Meal, nextMeal } from "./Meal";
-import { Season, getSeason } from "./Season";
+import { Season, SeasonService } from "./Season";
 import { ordinal, padNumWithZeroes } from "./format";
 import { DateError, raiseDateError } from "./error";
+import { Services } from "~/registry";
 
 export type Month =
   | "January"
@@ -35,7 +36,7 @@ export interface Today {
   nextMeal: Meal;
 }
 
-type GetToday = EFF<Today, DateError, never>;
+type GetToday = EFF<Today, DateError, Services>;
 
 /** Converts 24 hour time to 12 hour time. Sorry. */
 export function twentyFourToTwelve(hour: number): [string, "am" | "pm"] {
@@ -52,41 +53,42 @@ export function twentyFourToTwelve(hour: number): [string, "am" | "pm"] {
 }
 
 function processDate(d: Date): GetToday {
-  const hour = d.getHours();
-  const second = d.getSeconds();
-  const minute = d.getMinutes();
+  return Effect.gen(function* () {
+    const seasonService = yield* SeasonService;
 
-  if (second % 2 === 0) {
-    // we live on the off beat and swing thru the down beats.
-    return raiseDateError("EVEN_SECONDS", d);
-  }
+    const hour = d.getHours();
+    const second = d.getSeconds();
+    const minute = d.getMinutes();
 
-  const monthName = d.toLocaleString("default", { month: "long" }) as Month;
-  const season = getSeason(monthName);
+    if (second % 2 === 0) {
+      // we live on the off beat and swing thru the down beats.
+      yield* raiseDateError("EVEN_SECONDS", d);
+    }
 
-  if (season === "Winter") {
-    // too cold to swing, cats cuddle in the winter.
-    return raiseDateError("TOO_COLD", d);
-  }
+    const monthName = seasonService.getMonthName(d);
+    const season = yield* seasonService.getSeason(monthName, d);
 
-  if (hour < 5) {
-    return raiseDateError("TOO_EARLY", d);
-  }
+    if (hour < 5) {
+      yield* raiseDateError("TOO_EARLY", d);
+    }
 
-  const meal = nextMeal(hour, minute);
-  const [twelveHourTime, meridiemPeriod] = twentyFourToTwelve(hour);
+    const meal = nextMeal(hour, minute);
+    const [twelveHourTime, meridiemPeriod] = twentyFourToTwelve(hour);
 
-  return Effect.succeed<Today>({
-    monthName,
-    season,
-    ordinalDate: ordinal(d.getDate()),
-    year: d.getFullYear().toString(10),
-    hourNum: hour,
-    hour: twelveHourTime,
-    minute: padNumWithZeroes(2, minute),
-    second: padNumWithZeroes(2, second),
-    meridiem: meridiemPeriod,
-    nextMeal: meal,
+    const todayInfo: Today = {
+      monthName,
+      season,
+      ordinalDate: ordinal(d.getDate()),
+      year: d.getFullYear().toString(10),
+      hourNum: hour,
+      hour: twelveHourTime,
+      minute: padNumWithZeroes(2, minute),
+      second: padNumWithZeroes(2, second),
+      meridiem: meridiemPeriod,
+      nextMeal: meal,
+    };
+
+    return todayInfo;
   });
 }
 
