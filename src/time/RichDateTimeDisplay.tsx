@@ -11,6 +11,8 @@ import { DateDisplay } from "./DateDisplay";
 import { TimeDisplay } from "./TimeDisplay";
 import { isString } from "effect/Predicate";
 import { usePromise } from "~/re-effect/usePromise";
+import { ShowDeets } from "./ShowDeets";
+import { Services } from "~/registry";
 
 interface ShowTodayProps {
   today: Today;
@@ -28,6 +30,7 @@ const ShowToday = ({ today, isToday }: ShowTodayProps) => (
     <TimeDisplay today={today} />
     <Season season={today.season} />
     <Meal meal={today.nextMeal} />
+    <ShowDeets today={today} />
   </div>
 );
 
@@ -42,6 +45,8 @@ interface ShowErrorProps {
 
 const ShowError = ({ error, input }: ShowErrorProps) => {
   if (error == null || isString(error)) {
+    console.error("We got a whacky error case");
+    console.error(error);
     return (
       <div className="text-red-500 underline text-4xl">
         Something insane happened. Close the tab.
@@ -65,7 +70,9 @@ const Thinking = () => <div>thinking 🤔</div>;
 /** Display nicely formatted details about today, definitely has no quirks */
 export const RichDateTimeDisplay = ({ input }: RichDateTimeDisplayProps) => {
   const isToday = input === null;
-  const [match] = usePromise(isToday ? getToday : getDayFromInput(input));
+  const [match] = usePromise<Services>(
+    isToday ? getToday : getDayFromInput(input)
+  );
 
   return match({
     Pending: Thinking,
