@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useReducer } from "react";
 
-import { Effect, Data } from "effect";
+import { Data, Effect, Layer } from "effect";
 import type { Effect as EFF } from "effect/Effect";
 
 import {
@@ -12,9 +12,9 @@ import {
   collapseOk,
   createMatchCollapse,
   createResolvedMatchCollapse,
-  matchCollapse,
 } from "./collapsed";
 import { FirstParam } from "./type-utils";
+import { useLayer } from "./useLayer";
 
 type Actions<Result, Error> = Data.TaggedEnum<{
   Begin: {};
@@ -30,13 +30,6 @@ const actionMatcher = $match({
   Fail: (e) => collapseError(e.error),
 });
 
-const R: React.Reducer<Collapse<string, string>, Actions<string, string>> = (
-  s,
-  a
-) => {
-  return actionMatcher(a);
-};
-
 function promiseMachineReducer<Result, Error>(
   _state: Collapse<Result, Error | string>,
   action: Actions<Result, Error>
@@ -44,8 +37,9 @@ function promiseMachineReducer<Result, Error>(
   return actionMatcher(action);
 }
 
-function createEffectCollapse<Result, Error>(
-  eff: EFF<Result, Error>,
+function createEffectCollapse<Result, Error, Requirements = never>(
+  eff: EFF<Result, Error, Requirements>,
+  layer: Layer.Layer<Requirements, any, never>,
   dispatch: React.Dispatch<Actions<Result, Error>>
 ) {
   return () => {
@@ -54,7 +48,9 @@ function createEffectCollapse<Result, Error>(
 
     const matcher = createResolvedMatchCollapse<Result, Error | string>();
 
-    Effect.runPromiseExit(eff, { signal: controller.signal }).then((exit) => {
+    Effect.runPromiseExit(Effect.provide(eff, layer), {
+      signal: controller.signal,
+    }).then((exit) => {
       const collapsed = collapseExit(exit);
 
       matcher({
@@ -62,6 +58,11 @@ function createEffectCollapse<Result, Error>(
           dispatch(Succeed(s));
         },
         Error(e) {
+          if (e.isInterrupt) {
+            // stay in a pending state, takes care of strict mode unmounting
+            return;
+          }
+
           dispatch(Fail(e));
         },
       })(collapsed);
@@ -71,16 +72,19 @@ function createEffectCollapse<Result, Error>(
   };
 }
 
-/** Runs an effect as a promise on mount
+/** Runs an effect as a promise on mount for client components, requires a RuntimeProvider context
  *
  * @param eff A referentially stable Effect to run, wrapped in a useEffect(..., [])
  */
-export const usePromise = <Result, Error>(eff: EFF<Result, Error>) => {
+export const usePromise = <Context, Result = any, Error = any>(
+  eff: EFF<Result, Error, Context>
+) => {
   const [state, dispatch] = useReducer<
     typeof promiseMachineReducer<Result, Error>
   >(promiseMachineReducer, EMPTY_COLLAPSE);
 
-  useEffect(createEffectCollapse(eff, dispatch), []);
+  const layer = useLayer<Context, Error>();
+  useEffect(createEffectCollapse(eff, layer, dispatch), []);
 
   // pin the types so we can have exhaustive checking for cases
   const matcher = useCallback(

@@ -2,17 +2,25 @@ import { type Exit, match as matchExit } from "effect/Exit";
 import { type Cause, match as matchCause } from "effect/Cause";
 import { FiberId } from "effect/FiberId";
 import { Data } from "effect";
-import { ExtractByTag, FirstParam } from "./type-utils";
+import { FirstParam } from "./type-utils";
 
 export type Collapse<Result, Error> = Data.TaggedEnum<{
   Empty: {};
   Pending: {};
   Success: { readonly result: Result };
-  Error: { readonly error: Error };
+  Error: {
+    readonly error: Error;
+    /** A flag to mark the failure as an interrupt, which should usually be ignored by usePromise/useSync
+     *
+     * This kind of error may be due to a signal interruption or a fiber interrupt,
+     * like from an AbortController firing its signal when something is unmounted.
+     */
+    readonly isInterrupt: boolean;
+  };
 }>;
 
 /** A Collapse TaggedEnum constrainted to its Success or Error types only  */
-type ResolvedCollapse<Result, Error> = ExtractByTag<
+type ResolvedCollapse<Result, Error> = Data.TaggedEnum.Value<
   Collapse<Result, Error>,
   "Success" | "Error"
 >;
@@ -36,8 +44,8 @@ export function collapseOk<Result>(result: Result) {
   return Success({ result });
 }
 
-export function collapseError<Error>(error: Error) {
-  return Error({ error });
+export function collapseError<Error>(error: Error, isInterrupt = false) {
+  return Error({ error, isInterrupt });
 }
 
 /** Create a matcher for a resolved collapse (only success/error) */
@@ -64,10 +72,10 @@ const CAUSE_MATCHER = {
   onEmpty: collapseError("Empty cause"),
   onDie: (defect: any) => collapseError("Unexpected defect: " + String(defect)),
   onInterrupt: (fiberId: FiberId) =>
-    collapseError(`Interrupted [${fiberId}] - expecting retry`),
+    collapseError(`Interrupted [${fiberId}] - expecting retry`, true),
   onParallel: (_l: any, _r: any) => collapseError("Unexpected parallel error"),
   onSequential: (_l: any, _r: any) =>
-    collapseError("Sequential failure, expecting retry"),
+    collapseError("Sequential failure, expecting retry", true),
 } as CauseMatcher<any, any>;
 
 const collapseCause = <Error>(
