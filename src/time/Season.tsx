@@ -1,27 +1,8 @@
+import { Context, Effect, Layer } from "effect";
 import { Month } from "./time";
+import { DateError, raiseDateError } from "./error";
 
 export type Season = "Spring" | "Summer" | "Autumn" | "Winter";
-
-export function getSeason(month: Month): Season {
-  switch (month) {
-    case "December":
-    case "January":
-    case "February":
-      return "Winter";
-    case "March":
-    case "April":
-    case "May":
-      return "Spring";
-    case "June":
-    case "July":
-    case "August":
-      return "Summer";
-    case "September":
-    case "October":
-    case "November":
-      return "Autumn";
-  }
-}
 
 interface Bits {
   emoji: string;
@@ -62,3 +43,42 @@ export const Season = ({ season }: SeasonProps) => {
     </div>
   );
 };
+
+export class SeasonService extends Context.Tag("Season")<
+  SeasonService,
+  {
+    readonly getMonthName: (d: Date) => Month;
+    readonly getSeason: (
+      month: Month,
+      d: Date
+    ) => Effect.Effect<Season, DateError, never>;
+  }
+>() {}
+
+export const SeasonServiceLive = Layer.succeed(SeasonService, {
+  getMonthName(d) {
+    return d.toLocaleString("default", { month: "long" }) as Month;
+  },
+  getSeason(month, d: Date) {
+    switch (month) {
+      case "December":
+      case "January":
+      case "February":
+        // too cold to swing, cats cuddle in the winter.
+        return raiseDateError("TOO_COLD", d);
+      //return "Winter";
+      case "March":
+      case "April":
+      case "May":
+        return Effect.succeed("Spring");
+      case "June":
+      case "July":
+      case "August":
+        return Effect.succeed("Summer");
+      case "September":
+      case "October":
+      case "November":
+        return Effect.succeed("Autumn");
+    }
+  },
+});
