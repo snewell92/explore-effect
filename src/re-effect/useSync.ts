@@ -7,8 +7,8 @@ import { collapseExit, createResolvedMatchCollapse } from "./collapsed";
 import { compose } from "effect/Function";
 import { FirstParam } from "./type-utils";
 
-/** Gives you the errors useSync would yield */
-export type GetSyncErrors<TEffect extends EFF<unknown, unknown, unknown>> =
+/** Gives you the errors useSync/usePromise would yield */
+export type GetErrors<TEffect extends EFF<unknown, unknown, unknown>> =
   | EFF.Error<TEffect>
   | string;
 

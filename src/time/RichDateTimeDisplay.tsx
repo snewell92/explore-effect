@@ -2,7 +2,7 @@
  * calculate date/time/calendar display from today's date
  */
 
-import { type GetSyncErrors } from "~/re-effect/useSync";
+import { type GetErrors } from "~/re-effect/useSync";
 import { Meal } from "./Meal";
 import { getDayFromInput, getToday, Today } from "./time";
 import { Season } from "./Season";
@@ -12,7 +12,6 @@ import { TimeDisplay } from "./TimeDisplay";
 import { isString } from "effect/Predicate";
 import { usePromise } from "~/re-effect/usePromise";
 import { ShowDeets } from "./ShowDeets";
-import { Services } from "~/registry";
 
 interface ShowTodayProps {
   today: Today;
@@ -35,8 +34,8 @@ const ShowToday = ({ today, isToday }: ShowTodayProps) => (
 );
 
 type Errors =
-  | GetSyncErrors<typeof getToday>
-  | GetSyncErrors<ReturnType<typeof getDayFromInput>>;
+  | GetErrors<typeof getToday>
+  | GetErrors<ReturnType<typeof getDayFromInput>>;
 
 interface ShowErrorProps {
   error: Errors;
@@ -70,7 +69,7 @@ const Thinking = () => <div>thinking 🤔</div>;
 /** Display nicely formatted details about today, definitely has no quirks */
 export const RichDateTimeDisplay = ({ input }: RichDateTimeDisplayProps) => {
   const isToday = input === null;
-  const [match] = usePromise<Services>(
+  const [match] = usePromise(
     isToday ? getToday : getDayFromInput(input)
   );
 

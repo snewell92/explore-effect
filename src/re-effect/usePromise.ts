@@ -76,7 +76,7 @@ function createEffectCollapse<Result, Error, Requirements = never>(
  *
  * @param eff A referentially stable Effect to run, wrapped in a useEffect(..., [])
  */
-export const usePromise = <Context, Result = any, Error = any>(
+export const usePromise = <Context, Result, Error>(
   eff: EFF<Result, Error, Context>
 ) => {
   const [state, dispatch] = useReducer<
