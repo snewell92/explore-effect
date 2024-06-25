@@ -10,25 +10,26 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@effect/platform": "^0.55.5",
-    "@effect/platform-browser": "^0.35.5",
-    "effect": "^3.2.8",
+    "@effect/platform": "^0.58.9",
+    "@effect/platform-browser": "^0.37.9",
+    "@effect/schema": "^0.68.9",
+    "effect": "^3.4.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@typescript-eslint/eslint-plugin": "^7.11.0",
-    "@typescript-eslint/parser": "^7.11.0",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/parser": "^7.14.1",
     "@vitejs/plugin-react-swc": "^3.7.0",
     "autoprefixer": "^10.4.19",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
     "postcss": "^8.4.38",
-    "tailwindcss": "^3.4.3",
-    "typescript": "^5.4.5",
-    "vite": "^5.2.12"
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.5.2",
+    "vite": "^5.3.1"
   }
 }
