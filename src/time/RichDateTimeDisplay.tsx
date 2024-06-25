@@ -18,8 +18,8 @@ interface ShowTodayProps {
   isToday: boolean;
 }
 
-const ShowToday = ({ today, isToday }: ShowTodayProps) => (
-  <div className="text-center border-4 border-lime-300 p-4 rounded-lg mx-12 mb-6 min-h-80">
+const ShowToday = ({ today, isToday }: ShowTodayProps) => {
+  return <div className="text-center border-4 border-lime-300 p-4 rounded-lg mx-12 mb-6 min-h-80">
     {isToday ? <h1 className="text-slate-700 text-2xl">Today is</h1> : null}
 
     <DateDisplay
@@ -31,7 +31,7 @@ const ShowToday = ({ today, isToday }: ShowTodayProps) => (
     <Meal meal={today.nextMeal} />
     <ShowDeets today={today} />
   </div>
-);
+};
 
 type Errors =
   | GetErrors<typeof getToday>
