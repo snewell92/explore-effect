@@ -21,7 +21,7 @@ const FactResponse = Schema.Struct({
 // tracer fails CORs check due to the server being out of our control
 const getPostAndValidate = Effect.withTracerEnabled(false)(
   HttpClientRequest.get(FACT_URL, { acceptJson: true }).pipe(
-    HttpClient.fetch,
+    HttpClient.fetchOk,
     Effect.andThen(HttpClientResponse.schemaBodyJson(FactResponse)),
     Effect.scoped
   )
