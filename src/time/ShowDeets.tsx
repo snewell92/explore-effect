@@ -1,4 +1,4 @@
-import { TodayFact, usePreFetchTodayFn } from "~/facts/FactsService";
+import { TodayFact } from "~/facts/FactsService";
 import { Today } from "./time";
 import { useState } from "react";
 
@@ -8,7 +8,7 @@ interface DeetsProps {
 
 export const ShowDeets = ({ today }: DeetsProps) => {
   const [showFact, setShowFact] = useState(false);
-  const prefetch = usePreFetchTodayFn();
+  const prefetch = TodayFact.getPrefetcher();
 
   function showIt() {
     setShowFact(true);

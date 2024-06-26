@@ -1,3 +1,5 @@
+/** An example of a reducers + effect */
+
 import React, { useReducer, useEffect } from "react";
 import { Data } from "effect";
 

@@ -94,8 +94,7 @@ export const usePromise = <Context, Result, Error>(
 
   type CollapseMatcher = FirstParam<typeof matcher>;
 
-  const match = <Cases extends CollapseMatcher>(cases: Cases) =>
-    matcher(cases)(state);
+  const match = (cases: CollapseMatcher) => matcher(cases)(state);
 
   return [match, state] as const;
 };

@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { RichDateTimeDisplay } from "./time/RichDateTimeDisplay";
 import { FlipFlop } from "./FlipFlop";
+import { Current, DisplayMode, Specified } from "./time/time";
 
 function incrementNum(a: number): number {
   return a + 1;
@@ -8,6 +9,7 @@ function incrementNum(a: number): number {
 
 export function App() {
   const [todayMountKey, setTodayMountKey] = useState(0);
+  const [mode, setMode] = useState<DisplayMode>(Current());
   const [input, setInput] = useState<string | null>(null);
 
   const remountToday = useCallback(() => {
@@ -20,6 +22,7 @@ export function App() {
     if (clean.length === 0) {
       setInput(null);
     } else {
+      setMode(Specified({ isoDateTime: clean }));
       setInput(clean);
     }
   }, []);
@@ -31,7 +34,7 @@ export function App() {
       </h1>
       <p className="mb-4 pl-2">With a bit of whimsy</p>
 
-      <RichDateTimeDisplay key={`${todayMountKey}-${input}`} input={input} />
+      <RichDateTimeDisplay key={`${todayMountKey}-${input}`} mode={mode} />
 
       <button
         className="bg-lime-400 border-space-4 group border-4 block mx-auto px-12 py-2 text-2xl text-center border-purple-950 hover:border-teal-300"
@@ -49,10 +52,6 @@ export function App() {
           className="border-4 border-purple-950 px-2 py-1"
         />
       </div>
-
-      <hr />
-
-      <FlipFlop />
     </div>
   );
 }

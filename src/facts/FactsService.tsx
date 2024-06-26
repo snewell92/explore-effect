@@ -18,6 +18,7 @@ const FactResponse = Schema.Struct({
   text: Schema.String,
 });
 
+// tracer fails CORs check due to the server being out of our control
 const getPostAndValidate = Effect.withTracerEnabled(false)(
   HttpClientRequest.get(FACT_URL, { acceptJson: true }).pipe(
     HttpClient.fetch,
@@ -41,10 +42,7 @@ export class FactsService extends Tag {}
 
 const TODAY_FACT_QUERY_OPTTIONS = queryOptions({
   queryKey: ["today"],
-  queryFn: () => {
-    console.info("Returning the effect...");
-    return Effect.runPromise(getPostAndValidate);
-  },
+  queryFn: () => Effect.runPromise(getPostAndValidate),
 });
 
 export const FactsServiceLive = Layer.succeed(FactsService, {
@@ -65,7 +63,6 @@ export const FactsServiceLive = Layer.succeed(FactsService, {
 
 const PrefetchToday = Effect.gen(function* () {
   const { prefetchTodayFact } = yield* FactsService;
-  console.info("PREFETCHING");
   yield* prefetchTodayFact;
 });
 
@@ -73,7 +70,7 @@ const PrefetchToday = Effect.gen(function* () {
 let prefetched = false;
 
 /** Custom hook that returns a callback to prefetch today */
-export const usePreFetchTodayFn = () => {
+const usePreFetchTodayFn = () => {
   // TODO could I lift up the layer somehow?
   const layer = useLayer<FactsService | APIService, never>();
   const prefetch = useCallback(() => {
@@ -92,7 +89,11 @@ export const usePreFetchTodayFn = () => {
 
 const Pending = () => <div>...</div>;
 
-export const TodayFact = () => {
+export declare namespace TodayFact {
+  export let getPrefetcher: typeof usePreFetchTodayFn;
+}
+
+export function TodayFact() {
   const [match] = usePromise(
     Effect.gen(function* () {
       const { getTodayFact } = yield* FactsService;
@@ -106,4 +107,6 @@ export const TodayFact = () => {
     Error: (err) => <div>oops {JSON.stringify(err)}</div>,
     Success: ({ result }) => <p>{result}</p>,
   });
-};
+}
+
+TodayFact.getPrefetcher = usePreFetchTodayFn;

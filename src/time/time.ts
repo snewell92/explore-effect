@@ -116,9 +116,25 @@ const parseDate = (input: string) =>
     catch: (e) => new DateParseError(e),
   });
 
-// I don't think new Date w/ no args could ever fail (?)
+export type DisplayMode = Data.TaggedEnum<{
+  /** Get and Display today's date */
+  Current: {};
+  /** Display a provided date time from the user, expecting an ISO8601 formatted date string */
+  Specified: { readonly isoDateTime: string };
+}>;
+
+export const {
+  Current,
+  Specified,
+  $match: matchDisplayMode,
+} = Data.taggedEnum<DisplayMode>();
+
 const freshDay = Effect.sync(() => new Date());
 
-export const getToday = freshDay.pipe(Effect.flatMap(processDate));
-export const getDayFromInput = (input: string) =>
-  parseDate(input).pipe(Effect.flatMap(processDate));
+const displayModeMatcher = matchDisplayMode({
+  Current: () => freshDay,
+  Specified: ({ isoDateTime }) => parseDate(isoDateTime),
+});
+
+export const getDateTimeInfo = (mode: DisplayMode) =>
+  displayModeMatcher(mode).pipe(Effect.flatMap(processDate));
