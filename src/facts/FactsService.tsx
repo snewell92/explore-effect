@@ -19,7 +19,7 @@ const FactResponse = Schema.Struct({
 });
 
 // tracer fails CORs check due to the server being out of our control
-const getPostAndValidate = Effect.withTracerEnabled(false)(
+const FetchTodaysFact = Effect.withTracerEnabled(false)(
   HttpClientRequest.get(FACT_URL, { acceptJson: true }).pipe(
     HttpClient.fetchOk,
     Effect.andThen(HttpClientResponse.schemaBodyJson(FactResponse)),
@@ -30,7 +30,7 @@ const getPostAndValidate = Effect.withTracerEnabled(false)(
 interface Methods {
   readonly getTodayFact: EFF<
     string,
-    EFF.Error<typeof getPostAndValidate>,
+    EFF.Error<typeof FetchTodaysFact>,
     APIService
   >;
 }
@@ -41,7 +41,7 @@ export class FactsService extends Tag {}
 
 const TODAY_FACT_QUERY_OPTIONS = queryOptions({
   queryKey: ["today"],
-  queryFn: () => Effect.runPromise(getPostAndValidate),
+  queryFn: () => Effect.runPromise(FetchTodaysFact),
   staleTime: 3_600_000, // 60 * 60 * 1_000
   gcTime: Infinity,
 });
