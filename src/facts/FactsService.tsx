@@ -43,6 +43,8 @@ export class FactsService extends Tag {}
 const TODAY_FACT_QUERY_OPTTIONS = queryOptions({
   queryKey: ["today"],
   queryFn: () => Effect.runPromise(getPostAndValidate),
+  staleTime: 3_600_000, // 60 * 60 * 1_000
+  gcTime: Infinity,
 });
 
 export const FactsServiceLive = Layer.succeed(FactsService, {
@@ -66,25 +68,13 @@ const PrefetchToday = Effect.gen(function* () {
   yield* prefetchTodayFact;
 });
 
-// hack... lol
-let prefetched = false;
-
 /** Custom hook that returns a callback to prefetch today */
 const usePreFetchTodayFn = () => {
-  // TODO could I lift up the layer somehow?
   const layer = useLayer<FactsService | APIService, never>();
-  const prefetch = useCallback(() => {
-    if (prefetched) {
-      console.info("We already did this");
-      return;
-    }
-
-    // we don't care about the Exit/Result/pending - fire and forget, only once
-    prefetched = true;
-    Effect.runPromise(Effect.provide(PrefetchToday, layer));
-  }, []);
-
-  return prefetch;
+  return useCallback(
+    () => Effect.runPromise(Effect.provide(PrefetchToday, layer)),
+    []
+  );
 };
 
 const Pending = () => <div>...</div>;

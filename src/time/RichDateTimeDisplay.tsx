@@ -30,7 +30,7 @@ const ShowToday = ({ today, isToday }: ShowTodayProps) => {
       <TimeDisplay today={today} />
       <Season season={today.season} />
       <Meal meal={today.nextMeal} />
-      <ShowDeets today={today} />
+      <ShowDeets />
     </div>
   );
 };
