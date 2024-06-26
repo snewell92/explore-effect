@@ -33,7 +33,6 @@ interface Methods {
     EFF.Error<typeof getPostAndValidate>,
     APIService
   >;
-  readonly prefetchTodayFact: EFF<void, never, APIService>;
 }
 
 const Tag = Context.Tag("FactsService")<FactsService, Methods>();
@@ -57,15 +56,11 @@ export const FactsServiceLive = Layer.succeed(FactsService, {
 
     return result.text;
   }),
-  prefetchTodayFact: Effect.gen(function* () {
-    const { queryClient } = yield* APIService;
-    queryClient.prefetchQuery(TODAY_FACT_QUERY_OPTTIONS);
-  }),
 });
 
 const PrefetchToday = Effect.gen(function* () {
-  const { prefetchTodayFact } = yield* FactsService;
-  yield* prefetchTodayFact;
+  const { queryClient } = yield* APIService;
+  queryClient.prefetchQuery(TODAY_FACT_QUERY_OPTTIONS);
 });
 
 /** Custom hook that returns a callback to prefetch today */
