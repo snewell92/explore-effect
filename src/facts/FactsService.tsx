@@ -39,7 +39,7 @@ const Tag = Context.Tag("FactsService")<FactsService, Methods>();
 
 export class FactsService extends Tag {}
 
-const TODAY_FACT_QUERY_OPTTIONS = queryOptions({
+const TODAY_FACT_QUERY_OPTIONS = queryOptions({
   queryKey: ["today"],
   queryFn: () => Effect.runPromise(getPostAndValidate),
   staleTime: 3_600_000, // 60 * 60 * 1_000
@@ -51,7 +51,7 @@ export const FactsServiceLive = Layer.succeed(FactsService, {
     const { queryClient } = yield* APIService;
 
     const result = yield* Effect.promise(() =>
-      queryClient.ensureQueryData(TODAY_FACT_QUERY_OPTTIONS)
+      queryClient.ensureQueryData(TODAY_FACT_QUERY_OPTIONS)
     );
 
     return result.text;
@@ -60,7 +60,7 @@ export const FactsServiceLive = Layer.succeed(FactsService, {
 
 const PrefetchToday = Effect.gen(function* () {
   const { queryClient } = yield* APIService;
-  queryClient.prefetchQuery(TODAY_FACT_QUERY_OPTTIONS);
+  queryClient.prefetchQuery(TODAY_FACT_QUERY_OPTIONS);
 });
 
 /** Custom hook that returns a callback to prefetch today */
