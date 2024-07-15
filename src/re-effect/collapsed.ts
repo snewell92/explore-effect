@@ -1,9 +1,13 @@
 import { type Exit, match as matchExit } from "effect/Exit";
 import { type Cause, match as matchCause } from "effect/Cause";
+import { type Effect } from "effect/Effect";
 import { FiberId } from "effect/FiberId";
 import { Data } from "effect";
 import { FirstParam } from "./type-utils";
 
+/** A 'live' version of Exit to represent executing (aka collapsing) an Effect,
+ * includes states for initial (empty) / pending / success / error.
+ */
 export type Collapse<Result, Error> = Data.TaggedEnum<{
   Empty: {};
   Pending: {};
@@ -30,6 +34,22 @@ interface CollapseDef extends Data.TaggedEnum.WithGenerics<2> {
 }
 
 const { Empty, Pending, Success, Error } = Data.taggedEnum<CollapseDef>();
+
+export type SuccessCase<T> = ReturnType<typeof Success<T, any>>;
+export type InferSuccessCase<T> =
+  T extends (...args: any[]) => Effect<infer S, any, any>
+    ? SuccessCase<S>
+    : T extends Effect<infer S, any, any>
+      ? SuccessCase<S>
+      : SuccessCase<T>;
+
+export type ErrorCase<T> = ReturnType<typeof Error<T, any>>;
+export type InferErrorCase<T> =
+  T extends (...args: any[]) => Effect<any, infer E, any>
+    ? ErrorCase<E>
+    : T extends Effect<any, infer E, any>
+      ? ErrorCase<E>
+      : SuccessCase<T>;
 
 interface ResolvedCollapseDef extends Data.TaggedEnum.WithGenerics<2> {
   readonly taggedEnum: ResolvedCollapse<this["A"], this["B"]>;

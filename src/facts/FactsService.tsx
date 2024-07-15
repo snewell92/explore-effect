@@ -58,6 +58,11 @@ export const FactsServiceLive = Layer.succeed(FactsService, {
   }),
 });
 
+const GetTodaysFact = Effect.gen(function* () {
+  const { getTodayFact } = yield* FactsService;
+  return yield* getTodayFact;
+});
+
 const PrefetchToday = Effect.gen(function* () {
   const { queryClient } = yield* APIService;
   queryClient.prefetchQuery(TODAY_FACT_QUERY_OPTIONS);
@@ -74,17 +79,8 @@ const usePreFetchTodayFn = () => {
 
 const Pending = () => <div>...</div>;
 
-export declare namespace TodayFact {
-  export let getPrefetcher: typeof usePreFetchTodayFn;
-}
-
 export function TodayFact() {
-  const [match] = usePromise(
-    Effect.gen(function* () {
-      const { getTodayFact } = yield* FactsService;
-      return yield* getTodayFact;
-    })
-  );
+  const {match} = usePromise(GetTodaysFact);
 
   return match({
     Empty: Pending,
@@ -95,3 +91,7 @@ export function TodayFact() {
 }
 
 TodayFact.getPrefetcher = usePreFetchTodayFn;
+
+export declare namespace TodayFact {
+  export let getPrefetcher: typeof usePreFetchTodayFn;
+}

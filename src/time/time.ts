@@ -34,6 +34,7 @@ export interface Today {
   meridiem: "pm" | "am";
   season: Season;
   nextMeal: Meal;
+  isToday: boolean;
 }
 
 const Today = Data.case<Today>();
@@ -54,7 +55,7 @@ export function twentyFourToTwelve(hour: number): [string, "am" | "pm"] {
   return [twelveHourTime, meridiemPeriod];
 }
 
-function processDate(d: Date): GetToday {
+function processDate([d, isToday]: readonly [Date, boolean]): GetToday {
   return Effect.gen(function* () {
     const seasonService = yield* SeasonService;
 
@@ -88,6 +89,7 @@ function processDate(d: Date): GetToday {
       second: padNumWithZeroes(2, second),
       meridiem: meridiemPeriod,
       nextMeal: meal,
+      isToday
     });
   });
 }
@@ -95,9 +97,11 @@ function processDate(d: Date): GetToday {
 class DateParseError {
   readonly _tag = "DateParseError";
   readonly error: unknown;
+  readonly input: string;
 
-  constructor(error: unknown) {
+  constructor(error: unknown, input: string) {
     this.error = error;
+    this.input = input;
   }
 }
 
@@ -111,9 +115,9 @@ const parseDate = (input: string) =>
       if (isInvalidDate(d)) {
         throw new Error("Invalid date");
       }
-      return d;
+      return [d, false as boolean] as const;
     },
-    catch: (e) => new DateParseError(e),
+    catch: (e) => new DateParseError(e, input),
   });
 
 export type DisplayMode = Data.TaggedEnum<{
@@ -129,11 +133,11 @@ export const {
   $match: matchDisplayMode,
 } = Data.taggedEnum<DisplayMode>();
 
-const freshDay = Effect.sync(() => new Date());
+const freshDay = Effect.sync(() => ([new Date(), true as boolean] as const));
 
 const displayModeMatcher = matchDisplayMode({
   Current: () => freshDay,
-  Specified: ({ isoDateTime }) => parseDate(isoDateTime),
+  Specified: ({ isoDateTime }) => parseDate(isoDateTime)
 });
 
 export const getDateTimeInfo = (mode: DisplayMode) =>

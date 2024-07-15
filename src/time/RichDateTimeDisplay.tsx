@@ -12,20 +12,22 @@ import { TimeDisplay } from "./TimeDisplay";
 import { isString } from "effect/Predicate";
 import { usePromise } from "~/re-effect/usePromise";
 import { ShowDeets } from "./ShowDeets";
+import { InferErrorCase, InferSuccessCase } from "~/re-effect/collapsed";
 
 interface ShowTodayProps {
   today: Today;
-  isToday: boolean;
 }
 
-const ShowToday = ({ today, isToday }: ShowTodayProps) => {
+const ShowToday = ({ today }: ShowTodayProps) => {
   return (
     <div className="text-center border-4 border-lime-300 p-4 rounded-lg mx-12 mb-6 min-h-80">
-      {isToday ? <h1 className="text-slate-700 text-2xl">Today is</h1> : null}
+      {today.isToday ? (
+        <h1 className="text-slate-700 text-2xl">Today is</h1>
+      ) : null}
 
       <DateDisplay
         today={today}
-        className={isToday ? "" : "text-2xl border-x-4"}
+        className={today.isToday ? "" : "text-2xl border-x-4"}
       />
       <TimeDisplay today={today} />
       <Season season={today.season} />
@@ -39,10 +41,9 @@ type Errors = GetErrors<ReturnType<typeof getDateTimeInfo>>;
 
 interface ShowErrorProps {
   error: Errors;
-  input: string | null;
 }
 
-const ShowError = ({ error, input }: ShowErrorProps) => {
+const ShowError = ({ error }: ShowErrorProps) => {
   if (error == null || isString(error)) {
     console.error("We got a whacky error case");
     console.error(error);
@@ -54,7 +55,7 @@ const ShowError = ({ error, input }: ShowErrorProps) => {
   }
 
   if (error._tag === "DateParseError") {
-    return <ParseError input={input || ""} />;
+    return <ParseError input={error.input} />;
   }
 
   return <DisplayError error={error} />;
@@ -66,16 +67,22 @@ export interface RichDateTimeDisplayProps {
 
 const Thinking = () => <div>thinking 🤔</div>;
 
+function SuccessToday({ result }: InferSuccessCase<typeof getDateTimeInfo>) {
+  return <ShowToday today={result} />;
+}
+
+function ErrorCase({ error }: InferErrorCase<typeof getDateTimeInfo>) {
+  return <ShowError error={error} />;
+}
+
 /** Display nicely formatted details about today, definitely has no quirks */
 export const RichDateTimeDisplay = ({ mode }: RichDateTimeDisplayProps) => {
-  const isToday = true;
-  const input = "hey";
-  const [match] = usePromise(getDateTimeInfo(mode));
+  const { match } = usePromise(getDateTimeInfo(mode));
 
   return match({
     Pending: Thinking,
     Empty: Thinking,
-    Success: ({ result }) => <ShowToday today={result} isToday={isToday} />,
-    Error: ({ error }) => <ShowError error={error} input={input} />,
+    Success: SuccessToday,
+    Error: ErrorCase,
   });
 };

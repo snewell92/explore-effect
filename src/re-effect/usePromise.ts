@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useReducer } from "react";
+import React, { useCallback, useEffect, useReducer, useState } from "react";
 
 import { Data, Effect, Layer } from "effect";
 import type { Effect as EFF } from "effect/Effect";
@@ -37,6 +37,9 @@ function promiseMachineReducer<Result, Error>(
   return actionMatcher(action);
 }
 
+/** Collapse an Effect into a live data structure, returns a callback to cancel
+ * 
+ * An abort controller, matcher, and Collapse over an Exit execution of an Effect */
 function createEffectCollapse<Result, Error, Requirements = never>(
   eff: EFF<Result, Error, Requirements>,
   layer: Layer.Layer<Requirements, any, never>,
@@ -59,6 +62,7 @@ function createEffectCollapse<Result, Error, Requirements = never>(
         },
         Error(e) {
           if (e.isInterrupt) {
+            console.info("an interrupt with error: ", e.error);
             // stay in a pending state, takes care of strict mode unmounting
             return;
           }
@@ -72,7 +76,7 @@ function createEffectCollapse<Result, Error, Requirements = never>(
   };
 }
 
-/** Runs an effect as a promise on mount for client components, requires a RuntimeProvider context
+/** Runs an Effect as a promise on mount for client components, requires a RuntimeProvider context
  *
  * @param eff A referentially stable Effect to run, wrapped in a useEffect(..., [])
  */
@@ -92,9 +96,46 @@ export const usePromise = <Context, Result, Error>(
     []
   );
 
-  type CollapseMatcher = FirstParam<typeof matcher>;
+  const match = useCallback((cases: FirstParam<typeof matcher>) => matcher(cases)(state), [state]);
 
-  const match = (cases: CollapseMatcher) => matcher(cases)(state);
-
-  return [match, state] as const;
+  return {match, state} as const;
 };
+
+/** Wraps an Effect for client components, requires a RuntimeProvider context; call start to begin execution,
+ * and use match to observe the state, or use your own ifs on the state directly. A stop function is provided
+ * which will cancel the execution and reset the state back to Empty.
+ *
+ * @param eff A referentially stable Effect to run, wrapped in a useEffect(..., [])
+ */
+export const useLazyPromise = <Context, Result, Error>(
+  eff: EFF<Result, Error, Context>
+) => {
+  const [cancel, setCancel] = useState<((reason?: string) => void) | null>(null);
+  const [state, dispatch] = useReducer<
+    typeof promiseMachineReducer<Result, Error>
+  >(promiseMachineReducer, EMPTY_COLLAPSE);
+
+  const layer = useLayer<Context, Error>();
+
+  // pin the types so we can have exhaustive checking for cases
+  const matcher = useCallback(
+    createMatchCollapse<Result, Error | string>(),
+    []
+  );
+
+  const kickOff = useCallback(createEffectCollapse(eff, layer, dispatch), [eff]);
+  const match = useCallback((cases: FirstParam<typeof matcher>) => matcher(cases)(state), [state]);
+
+  const start = useCallback(() => {
+    setCancel(kickOff());
+  }, [eff]);
+
+  const stop = useCallback((reason?: string) => {
+    if (cancel) {
+      cancel(reason);
+      dispatch(Begin());
+    }
+  }, [cancel]);
+
+  return {match, state, start, stop} as const;
+}
